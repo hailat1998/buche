@@ -836,38 +836,54 @@
                     </div>
                 </div>
 
-                <div class="contact-form">
-                    <h3>Request a Quote</h3>
-                    <form onsubmit="event.preventDefault(); showSuccessMessage(this);">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" class="form-control" placeholder="John Doe" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" class="form-control" placeholder="john@example.com" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="service">Service Required</label>
-                            <select id="service" class="form-control">
-                                <option>General Printing</option>
-                                <option>Lamination</option>
-                                <option>Large Format</option>
-                                <option>Business Cards</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="message">Project Details</label>
-                            <textarea id="message" class="form-control" placeholder="Describe quantity, paper size, and specs..."></textarea>
-                        </div>
-                        <button type="submit" class="btn">Send Request</button>
-                    </form>
-                    <!-- Success Message Container (Hidden by default) -->
-                    <div id="form-success" style="display:none; margin-top:15px; padding:15px; background-color:#d4edda; color:#155724; border-radius:5px; border:1px solid #c3e6cb;">
-                        <strong>Success!</strong> Your request has been sent. We will contact you shortly.
-                    </div>
-                </div>
+         <div class="contact-form">
+    <h3>Request a Quote</h3>
+    <!--
+       1. We removed onsubmit="..." so the browser handles it normally.
+       2. We added _next="index.html?success=true".
+          This tells Formsubmit to send the user back to this page after sending.
+    -->
+    <form
+    action="https://formsubmit.co/YOUR_EMAIL_HERE"
+    method="POST"
+    onsubmit="submitForm(event, this)">
+
+    <!-- These hidden inputs customize the email you receive -->
+    <input type="hidden" name="_subject" value="New Printing Quote Request from Gamo Press Website">
+    <input type="hidden" name="_captcha" value="false">
+
+    <!-- The rest of your inputs follow below... -->
+
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" class="form-control" placeholder="john@example.com" required>
+        </div>
+        <div class="form-group">
+            <label for="service">Service Required</label>
+            <select id="service" name="service" class="form-control">
+                <option>General Printing</option>
+                <option>Lamination</option>
+                <option>Large Format</option>
+                <option>Business Cards</option>
+                <option>Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="message">Project Details</label>
+            <textarea id="message" name="message" class="form-control" placeholder="Describe quantity, paper size, and specs..."></textarea>
+        </div>
+        <button type="submit" class="btn">Send Request</button>
+    </form>
+
+    <!-- Success Message Container (Hidden by default) -->
+    <div id="form-success" style="display:none; margin-top:15px; padding:15px; background-color:#d4edda; color:#155724; border-radius:5px; border:1px solid #c3e6cb;">
+        <strong>Success!</strong> Your request has been sent. We will contact you shortly.
+    </div>
+</div>
             </div>
         </div>
     </section>
@@ -921,22 +937,49 @@
             nav.classList.toggle('active');
         }
 
-        // Show Success Message for Form
-        function showSuccessMessage(form) {
+               // Handle Form Submission via AJAX (No backend needed)
+        async function submitForm(event, form) {
+            event.preventDefault(); // Stop page reload
+
             const btn = form.querySelector('button');
             const successMsg = document.getElementById('form-success');
-            
-            // Visual feedback on button
             const originalText = btn.innerText;
+
+            // UI Feedback: Sending...
             btn.innerText = "Sending...";
             btn.style.opacity = "0.7";
+            btn.disabled = true;
 
-            setTimeout(() => {
-                form.style.display = 'none';
-                successMsg.style.display = 'block';
+            try {
+                // Send data to Formsubmit.co
+                const response = await fetch(form.action, {
+                    method: form.method,
+                    body: new FormData(form),
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // UI Feedback: Success
+                    form.style.display = 'none';
+                    successMsg.style.display = 'block';
+                    successMsg.innerHTML = "<strong>Success!</strong> Your quote request has been sent directly to our email.";
+                } else {
+                    // UI Feedback: Error
+                    const data = await response.json();
+                    alert(data.message || 'Something went wrong. Please try again.');
+                    btn.innerText = "Try Again";
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                }
+            } catch (error) {
+                // UI Feedback: Network Error
+                alert('Network error. Please check your internet connection.');
                 btn.innerText = originalText;
+                btn.disabled = false;
                 btn.style.opacity = "1";
-            }, 1000);
+            }
         }
 
         // Close mobile menu when clicking a link
