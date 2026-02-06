@@ -938,49 +938,48 @@
         }
 
                // Handle Form Submission via AJAX (No backend needed)
-        async function submitForm(event, form) {
-            event.preventDefault(); // Stop page reload
+       async function submitForm(event, form) {
+    event.preventDefault();
 
-            const btn = form.querySelector('button');
-            const successMsg = document.getElementById('form-success');
-            const originalText = btn.innerText;
+    const btn = form.querySelector('button');
+    const successMsg = document.getElementById('form-success');
+    const originalText = btn.innerText;
 
-            // UI Feedback: Sending...
-            btn.innerText = "Sending...";
-            btn.style.opacity = "0.7";
-            btn.disabled = true;
+    btn.innerText = "Sending...";
+    btn.style.opacity = "0.7";
+    btn.disabled = true;
 
-            try {
-                // Send data to Formsubmit.co
-                const response = await fetch(form.action, {
-                    method: form.method,
-                    body: new FormData(form),
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
+    try {
+        // Use the AJAX endpoint (add /ajax to the URL)
+        const ajaxUrl = form.action.replace('formsubmit.co/', 'formsubmit.co/ajax/');
 
-                if (response.ok) {
-                    // UI Feedback: Success
-                    form.style.display = 'none';
-                    successMsg.style.display = 'block';
-                    successMsg.innerHTML = "<strong>Success!</strong> Your quote request has been sent directly to our email.";
-                } else {
-                    // UI Feedback: Error
-                    const data = await response.json();
-                    alert(data.message || 'Something went wrong. Please try again.');
-                    btn.innerText = "Try Again";
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                }
-            } catch (error) {
-                // UI Feedback: Network Error
-                alert('Network error. Please check your internet connection.');
-                btn.innerText = originalText;
-                btn.disabled = false;
-                btn.style.opacity = "1";
+        const response = await fetch(ajaxUrl, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'Accept': 'application/json'
             }
+        });
+
+        if (response.ok) {
+            form.style.display = 'none';
+            successMsg.style.display = 'block';
+            successMsg.innerHTML = "<strong>Success!</strong> Your quote request has been sent directly to our email.";
+        } else {
+            const data = await response.json();
+            alert(data.message || 'Something went wrong. Please try again.');
+            btn.innerText = "Try Again";
+            btn.disabled = false;
+            btn.style.opacity = "1";
         }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Network error. Please check your internet connection.');
+        btn.innerText = originalText;
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    }
+}
 
         // Close mobile menu when clicking a link
         document.querySelectorAll('nav a').forEach(link => {
